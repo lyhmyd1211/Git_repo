@@ -1,0 +1,749 @@
+1、前期环境准备：
+node.js（当前项目使用版本V8.5.0）
+下载地址：https://nodejs.org/en/
+Yarn(1.7.0)：
+使用yarn 代替npm以及npm的淘宝镜像。
+
+安装：npm i yarn -g
+
+使用说明：https://yarnpkg.com/zh-Hans/docs/usage
+
+2、不使用脚手架搭建环境（当前项目）：
+2.1、初始化pacage.json:   
+ npm init
+不是在npm上发布不需要填，一直回车就好。
+2.2、安装项目所需依赖（^为当前项目版本）：
+安装webpack、webpack-cli:
+yarn add webpack webpack-cli --dev
+
+Webpack 4使用说明：https://webpack.js.org/concepts/。
+
+附带安装一系列依赖：
+React：
+"react": "^16.3.2",
+"react-dom": "^16.3.2",
+
+React-router:
+"react-router": "^4.0.0",
+"react-router-dom": "^4.0.0",
+
+Redux:
+"redux": "^4.0.0",
+"react-redux": "^5.0.7",
+
+Antdesign:
+"antd": "^3.5.0",
+
+Echarts:
+"echarts": "^4.1.0",
+
+
+
+热加载所需：
+"webpack-dev-middleware" ,
+"webpack-hot-middleware"
+
+
+Babel所需：
+"babel-cli": "^6.24.0",
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+   
+Webpack loader所需：
+"less-loader": "^4.1.0",
+"css-loader": "^0.28.11",
+"file-loader": "^1.1.11",
+"html-loader": "^0.5.5",
+
+Node服务端框架express：
+"express": "^4.16.3",
+
+本地代理所需：
+"http-proxy-middleware": "^0.18.0",
+
+以及其他项目所用到的依赖见代码。
+
+根据项目需要安装依赖，注意依赖版本，
+仔细阅读文档，避免产生冲突。
+
+2.3、编写配置文件
+2.3.1、webpack配置文件：
+在根目录下scripts中创建
+            通用配置：webpack.config.js
+开发环境的配置：webpack.development.js
+生产环境的配置：webpack.production.js
+
+在webpack.config中配置入口，出口，以及加载不同文件的loader
+entry: {
+    app: ["babel-polyfill", path.resolve(app, "index.js")]
+  },
+  output: {
+    path: path.resolve(src, "build-" + timeStr),
+    publicPath: "/youquweb/",
+    filename: "[name]_[hash:8].js",
+    libraryTarget: "umd"
+  },
+resolve: {
+    modules: [app, nodeModules],
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".json", ".css", ".less"]
+  },
+  module: {
+    rules: [
+      {
+        test: /\.jsx?$/,
+        loader: "babel-loader",
+        exclude: [nodeModules]
+      },
+     {
+。。。
+}，
+{
+。。。
+}
+    ]
+  },
+在开发环境webpack.development.js
+或生产环境webpack.production.js中配置
+
+注意webpack4的不同配置方法。通过mode直接区分开发与生产环境的不同，webpack4在不同环境指定了一些基本的默认配置。
+默认的配置项有：
+
+Development
+
+//调试
+devtool:eval
+//缓存模块, 避免在未更改时重建它们。
+cache:true
+//缓存已解决的依赖项, 避免重新解析它们。
+module.unsafeCache:true
+//在 bundle 中引入「所包含模块信息」的相关注释
+output.pathinfo:true
+//在可能的情况下确定每个模块的导出,被用于其他优化或代码生成。
+optimization.providedExports:true
+//找到chunk中共享的模块,取出来生成单独的chunk
+optimization.splitChunks:true
+//为 webpack 运行时代码创建单独的chunk
+optimization.runtimeChunk:true
+//编译错误时不写入到输出
+optimization.noEmitOnErrors:true
+//给模块有意义的名称代替ids
+optimization.namedModules:true
+//给模chunk有意义的名称代替ids
+optimization.namedChunks:true
+production
+
+//性能相关配置
+performance:{hints:"error"....}
+//某些chunk的子chunk已一种方式被确定和标记,这些子chunks在加载更大的块时不必加载
+optimization.flagIncludedChunks:true
+//给经常使用的ids更短的值
+optimization.occurrenceOrder:true
+//确定每个模块下被使用的导出
+optimization.usedExports:true
+//识别package.json or rules sideEffects 标志
+optimization.sideEffects:true
+//尝试查找模块图中可以安全连接到单个模块中的段。- -
+optimization.concatenateModules:true
+//使用uglify-js压缩代码
+optimization.minimize:true
+
+webpack运行时还会根据mode设置一个全局变量process.env.NODE_ENV,这里的process.env.NODE_ENV不是node中的环境变量,而是webpack.DefinePlugin中定义的全局变量,允许你根据不同的环境执行不同的代码。
+
+
+
+
+
+
+
+
+
+
+
+
+2.3.2、.babelrc文件：
+{
+  "presets": ["react", "es2015", "stage-0"],     
+  "plugins": [
+    "transform-runtime",                 //使用es6语法则需要配置
+    "transform-decorators-legacy",		//要使用装饰器时进行的配置
+    "lodash",                         //要使用lodash时进行的配置
+    [
+      "import",
+       {
+        "libraryName": "antd",          //按需加载antd时需要配置
+        "style": "css"
+       }
+    ]
+  ],
+  "env": {
+    "development": {
+      
+    }
+  }
+}
+
+2.3.3、antdesign图标本地化方法
+下载地址：https://ant.design/docs/spec/download-cn
+也可以通过：npm i antd-iconfont 或yarn add antd-iconfont
+然后配置webpack.config中less：
+{
+      test: /\.less$/,
+      loader: ExtractTextPlugin.extract({
+        fallback:'style-loader',
+        use: ['css-loader',  {
+          loader: 'less-loader',   // compiles Less to CSS
+          options: {
+            // 这里配置全局变量
+            modifyVars: {
+              // 修改图标库为本地离线，而不是阿里云CDN上的图标资源 
+              "@icon-url": '"/iconfont/iconfont"'
+            }
+          }
+        }],
+        // publicPath:'',
+      }),
+    }
+
+2.3.4、Server.js
+express基本配置，
+//引入express中间件
+var express = require('express');var app = express();
+//指定启动服务器到哪个文件夹，我这边指的是dist文件夹
+app.use(express.static('../dist'));
+app.use(require('webpack-dev-middleware')(compiler, {
+  hot: true,
+  publicPath:webpackConfig.output.publicPath,
+  historyApiFallback: true,
+  compress: true,
+  noInfo: true,
+  stats: {
+    colors: true,
+  },
+  stats: {
+    colors: true,
+  },
+}));
+
+
+
+
+app.use("/", proxy(config.PROXY_OPTION));
+app.use(require('webpack-hot-middleware')(compiler));
+
+app.set('port', process.env.PORT || config.PORT);
+
+if (app.get('env') === 'production') {
+  app.use(function (req, res, next) {
+    var protocol = req.get('x-forwarded-proto');
+    protocol == 'https' ? next() : res.redirect('https://' + req.hostname + req.url);
+  });
+}
+//监听端口为3000var server = app.listen(3000, function () {
+    var host = server.address().address;
+    var port = server.address().port;
+
+    console.log('Example app listening at http://%s:%s', host, port);
+});
+
+
+可以自行添加express中间件，例如添加
+http-proxy-middleware反向代理中间件，可以解决在localhost本地开发时请求api接口跨域的问题，在本地愉快的请求接口，提高开发效率。
+http-proxy-middleware使用方法：
+安装 
+npm i http-proxy-middleware 
+或
+yarn add http-proxy-middleware
+使用
+在server.js中
+var proxy = require("http-proxy-middleware");
+var config = require('../configs');
+。。。。
+app.use("/", proxy(config.PROXY_OPTION));
+
+注：
+config.PROXY_OPTION是引用的全局变量如下：
+
+PROXY_OPTION: {
+    target:'http://。。。',
+    changeOrigin: true,
+  },
+不用全局变量也可以这样写：
+app.use("/", proxy({
+    target:'http://。。。',
+    changeOrigin: true,
+  }));
+"/"代表所有请求，你也可以单独为某个api设置代理,例如以"/services"开头的服务：
+app.use("/services", proxy({
+    target:'http://。。。',
+    changeOrigin: true,
+  }));
+更多配置选项见：
+https://www.npmjs.com/package/http-proxy-middleware。
+
+注意中间件的加载顺序。
+
+
+2.3.5、package.json
+最后在package.json中添加快捷操作
+"scripts": {
+    "dev": "webpack",
+    "start": "node scripts/server.js",
+    "build": "webpack --config scripts/webpack.production.js --progress",
+    "lint": "eslint app/**/*.{js,jsx}",
+    "precommit": "npm run lint"
+  },
+这样 使用yarn start 其实就是运行了node  scripts/server.js
+scripts/server.js是我们刚才配置的express，此时就在本地启动了一个express服务器
+
+2.3.6、.eslintrc
+安装eslint之后，需要配置eslintrc来规范代码格式
+悠趣项目中的.eslintrc是已经配置好的规范文件，可以直接拿来用。
+可以在.eslintignore文件中配置不需要eslint检测的文件，如：
+**/node_modules
+server.js
+webpack.*.js
+
+3、使用脚手架搭建环境：
+3.1、使用create-react-app快速搭建环境（也可以选择其他脚手架，自行探索）：
+随便一个cmd全局安装：
+npm install -g create-react-app
+或
+yarn global add create-react-app
+在项目位置执行（my-app是你的项目名称）：
+create-react-app my-app
+cd my-app/
+就会生成这样的目录结构：
+
+
+它提供了webpack一些常用的默认配置，并把配置文件给隐藏了。默认配置不包括antdesign，decorator以及less等等，想要使用还要自行配置。有两种方法：
+
+3.1.1、自定义配置方法--不暴露配置文件：
+可以根据antdesign官方给出的方法：
+https://ant.design/docs/react/use-with-create-react-app-cn
+使用react-app-rewired ：一个自定义配置的折中解决方案。
+
+（1）引入 react-app-rewired 并修改 package.json 里的启动配置。
+
+$ yarn add react-app-rewired --dev
+
+/* package.json */
+"scripts": {
+-   "start": "react-scripts start",
++   "start": "react-app-rewired start",
+-   "build": "react-scripts build",
++   "build": "react-app-rewired build",
+-   "test": "react-scripts test --env=jsdom",
++   "test": "react-app-rewired test --env=jsdom",
+}
+（2）然后在项目根目录创建一个 config-overrides.js 用于修改默认配置。
+
+module.exports = function override(config, env) {
+  // do stuff with the webpack config...
+  return config;
+};
+（3）使用 babel-plugin-import#
+babel-plugin-import 是一个用于按需加载组件代码和样式的 babel 插件（原理），现在我们尝试安装它并修改 config-overrides.js 文件。
+
+$ yarn add babel-plugin-import --dev
++ const { injectBabelPlugin } = require('react-app-rewired');
+
+  module.exports = function override(config, env) {
++   config = injectBabelPlugin(['import', { libraryName: 'antd', libraryDirectory: 'es', style: 'css' }], config);
+    return config;
+  };
+
+（4）同样的使用react-app-rewire-less配置Less
+
+yarn add react-app-rewire-less  --dev
+
+/* config-overrides.js */
+const { injectBabelPlugin } = require('react-app-rewired');
+const rewireLess = require('react-app-rewire-less');
+
+module.exports = function override(config, env) {
+   config = injectBabelPlugin(['import', { libraryName: 'antd', style: true }], config);
+   config = rewireLess.withLoaderOptions({
+     modifyVars: { "@primary-color": "#1DA57A" },
+   })(config, env);
+    return config;
+};
+可能遇到的问题： 
+问题1、__DEV__ is not defined.
+
+解决方案：
+yarn add  react-app-rewire-define-plugin --dev
+
+/* config-overrides.js */
+const { injectBabelPlugin } = require('react-app-rewired');
+const rewireLess = require('react-app-rewire-less');
+const rewireDefinePlugin = require('react-app-rewire-define-plugin');
+
+module.exports = function override(config, env) {
+    config = injectBabelPlugin(['import', { libraryName: 'antd', style: true }], config);
+    config = rewireLess.withLoaderOptions({
+        modifyVars: { "@primary-color": "#1DA57A" },
+    })(config, env);
+    config = rewireDefinePlugin(config, env, {
+        __DEV__: false
+    });
+    return config;
+};
+
+问题2、Cannot read property ‘exclude’ of undefined 
+参考 
+https://github.com/timarney/react-app-rewired/issues/145 
+
+解决方案 
+https://github.com/dawnmist/react-app-rewired/commit/25208ab81791edb4356dc959188bcd4c4471ad87
+
+注意：decorator装饰器也需要自定义配置，但是我还没找到不暴露配置文件的解决方案，只能通过以下黑科技：
+yarn add  babel-plugin-transform-decorators-legacy --dev
+
+然后在node_modules/babel-preset-react-app/index.js plugins中添加
+require.resolve('babel-plugin-transform-decorators-legacy')
+
+这只解决了你本地的依赖中可以使用decorator,但其他人的依赖没有修改，所以不要用这个方法！！！！！！！
+
+3.1.2、自定义配置方法--暴露内建配置文件（注意：该过程不可逆）
+npm run eject
+或
+yarn run eject
+
+暴露的配置文件
+
+1. 使用babel-plugin-import实现Antd按需加载，修改package.json，或者在项目根目录新建文件.babelrc写配置，注意是二选一。
+
+yarn add  babel-plugin-import --dev
+
+1）package.json
+
+"babel": {
+    "presets": [
+      "react-app"
+    ],
+    "plugins": [
+      [
+        "import",
+        {
+          "libraryName": "antd",
+          "style": true
+        }
+      ]
+    ]
+  },
+2）.babelrc
+
+{
+   "presets": [
+      "react-app"
+    ],
+    "plugins": [
+      [
+        "import",
+        {
+          "libraryName": "antd",
+          "style": true
+        }
+      ]
+    ]
+}
+注意： 不要认为package.json里已有presets配置这里就不用写，这里的.babelrc会覆盖package.json里带有的babel配置，如果删除presets配置，会报错。
+
+引入Less
+1）安装less-loader 和 less
+
+yarn add  less-loader less --dev
+
+2）修改config文件夹下的webpack.config.dev.js和webpack.config.prod.js文件(都需要修改) 
+查找 ：exclude 
+原本的 exclude: [/\.js$/, /\.html$/, /\.json$/], 
+修改为 exclude: [/\.html$/, /\.(js|jsx)$/, /\.(css|less)$/, /\.json$/, /\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
+
+查找：test: /.css$/ 
+原本的 test: /\.css$/, 
+修改为 test: /\.(css|less)$/,
+
+在这个test的下面找到use，添加loader
+
+  use: [  
+    {...},
+    {...},
+    {
+      loader: require.resolve('less-loader') // compiles Less to CSS
+    }
+  ],
+4、开发
+整体的搭建好架子在：https://github.com/lyhmyd1211/ehame-react-cli
+欢迎star。
+4.1、项目目录结构
+
+4.1.1、Configs:
+全局配置
+例如代理的地址，端口号等全局变量都可以放这
+4.1.2、Iconfont:
+本地化图标文件（本地化图标见2.3.3）。
+4.1.3、Scripts:
+express的启动文件（配置见2.3.4），
+以及webpack的配置文件（配置见2.3.1）
+4.1.4、src：
+项目主体结构，根据不同项目需要自行建立。
+主体大致有：
+4.1.4.1、redux-root ：react-redux。
+4.1.4.2、router: 路由配置
+4.1.4.3、Styles:公共样式，图片资源
+4.1.4.4、unit:请求平台接口时用的历史遗留方法（使用的是	XMLHttpRequest请求，最好不好用了，可以使用fetch或者axios重写，	基本可以废弃了这个东西）
+4.1.4.5、utils.js：工具方法，现在有各种验证的集合，可以把工具方法		写在里面。
+4.1.4.6、view：UI页面主体代码，包括404错误页，component公用组		件，content内容页面
+4.1.4.7、Index.html:单一模板（所谓的单页面）
+4.1.4.8、Index.js：入口文件
+
+4.2、redux使用指南：
+4.2.1、redux
+基础知识：https://segmentfault.com/a/1190000012976767
+所需依赖：
+"redux": "^4.0.0",
+"react-redux": "^5.0.7",
+"redux-saga": "^0.16.0",
+"redux-logger": "^3.0.6",
+
+Redux包括三个部分，store,action ,reducer;
+store是中转站，所有要中转的状态都可以放在这里。
+action相当于一个指令，action是类似这样的对象：
+{type:SETVALUE,payload:n}
+必须要有type,用来在reducer中寻找对应的处理方法。
+reducer就是放在store中每个action所对应的处理方法，类似这样的纯函数：
+它的参数state为默认值，action是所发出的action。
+const tableData = (state = {root:{list:[]},totalNum:0}, action = {}) => {
+  switch (action.type) {
+  case DATASOURCE:
+    return action.payload;
+  case GET_ERROR:
+    return state;
+  default:
+    return state;
+  }
+};
+通过人为的分发（dispatch）一个动作（action）到store中寻找相应的处理函数（reducer）,通过处理之后在返回到store中。
+以上简要的说明了redux的具体流程。Redux作为一个状态管理容器，支持 React、Angular、Ember、jQuery 甚至纯 JavaScript。接下来说说如何react如何与redux关联起来。
+
+4.2.2、react-redux
+React-redux提供两个方法：
+
+4.2.2.1、Provider
+通过<Provider store={store}>包裹顶层组件使得所有的组件都和redux进行关联。
+
+4.2.2.2、connect
+与redux关联之后还要搭建通往store的桥梁，connect就是那座桥梁。
+conncet是有4个参数的高阶组件：
+connect(mapStateToProps,mapDispatchToProps,mergeProps,options={})(MyComponent)
+
+1、mapStateToProps：传入所有state，返回指定的state数据。
+function mapStateToProps(state) {
+      return { todos: state.todos }
+    }
+2、mapDispatchToProps：传入dispatch，返回使用bindActionCreators()绑定的action方法。bindActionCreators可以分发多个action。
+function mapDispatchToProps(dispatch) {
+return
+  bindActionCreators(Object.assign({},todoActionCreators,counterActionCreators), dispatch)
+}
+如果只分发单个action可以直接写：
+function mapDispatchToProps(dispatch) {
+ return  getData: n => dispatch(myaction(n)),}
+
+mergeProps：mergeProps如果不指定，则默认返回 Object.assign({}, ownProps, stateProps, dispatchProps)，顾名思义，mergeProps是合并的意思，将state合并后传递给组件。
+
+function mergeProps(stateProps, dispatchProps, ownProps) {
+  return Object.assign({}, ownProps, {
+    todos: stateProps.todos[ownProps.userId],
+    addTodo: (text) => dispatchProps.addTodo(ownProps.userId, text)
+  })
+}
+options：通过配置项可以更加详细的定义connect的行为，通常只需要执行默认值。
+
+
+使用装饰器写法：
+@connect(
+  state => ({
+    dataSource: state.table.tableData,
+    pageData:state.table.pageData,
+  }),
+  dispatch => ({
+    getData: n => dispatch(BEGIN(n)),
+    getPageData:n=>dispatch(getPageData(n)),
+    retSetData: n=>dispatch(getDataSource(n)),
+    getSelectRowData: n => dispatch(getSelectRows(n)),
+  })
+)
+export default class TableAndSearch extends Component {
+。。。
+}
+4.3、react-router4使用指南：
+现在的版本中已不需要路由配置，现在一切皆组件。
+4.3.1、安装
+React Router被拆分成三个包：react-router,react-router-dom和react-router-native。react-router提供核心的路由组件与函数。其余两个则提供运行环境（即浏览器与react-native）所需的特定组件。
+进行网站（将会运行在浏览器环境中）构建，我们应当安装react-router-dom。react-router-dom暴露出react-router中暴露的对象与方法，因此你只需要安装并引用react-router-dom即可。
+
+yarn add  react-router-dom
+
+4.3.2、路由器(Router)
+在你开始项目前，你需要决定你使用的路由器的类型。对于网页项目，存在<BrowserRouter>与<HashRouter>两种组件。当存在服务区来管理动态请求时，需要使用<BrowserRouter>组件，而<HashRouter>被用于静态网站。
+
+通常，我们更倾向选择<BrowserRouter>，但如果你的网站仅用来呈现静态文件，那么<HashRouter>将会是一个好选择。
+
+对于我们的项目，将设将会有服务器的动态支持，因此我们选择<BrowserRouter>作为路由器组件。
+
+4.3.3、历史(History)
+每个路由器都会创建一个history对象并用其保持追踪当前location[注1]并且在有变化时对网站进行重新渲染。这个history对象保证了React Router提供的其他组件的可用性，所以其他组件必须在router内部渲染。一个React Router组件如果向父级上追溯却找不到router组件，那么这个组件将无法正常工作。
+
+4.3.4、渲染<Router>
+路由器组件无法接受两个及以上的子元素。基于这种限制的存在，创建一个<App>组件来渲染应用其余部分是一个有效的方法（对于服务端渲染，将应用从router组件中分离也是重要的）。
+
+import { BrowserRouter } from 'react-router-dom'
+ReactDOM.render((
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+), document.getElementById('root'))
+<App>
+应用通过<App>组件定义。简化一下，我们将应用拆分成两个部分。<Header>组件包含网站的导航链接。<Main>组件则呈现其余内容。
+
+// this component will be rendered by our <___Router>
+const App = () => (
+  <div>
+    <Header />
+    <Main />
+  </div>
+)
+注意：你可以按你喜欢的方式对应用布局，但是将路由与导航拆分出来对于这个入门教程会成家简单。
+
+4.3.5、路由(Route)
+<Route>组件是React Router中主要的结构单元。在任意位置只要匹配了URL的路径名(pathname)你就可以创建<Route>元素进行渲染。
+
+4.3.6、路径(Path)
+<Route>接受一个数为string类型的path，该值路由匹配的路径名的类型。例如：<Route path='/roster'/>会匹配以/roster[注2]开头的路径名。在当前path参数与当前location的路径相匹配时，路由就会开始渲染React元素。若不匹配，路由不会进行任何操作[注3]。
+
+<Route path='/roster'/>
+// 当路径名为'/'时, path不匹配
+// 当路径名为'/roster'或'/roster/2'时, path匹配
+// 当你只想匹配'/roster'时，你需要使用"exact"参数
+// 则路由仅匹配'/roster'而不会匹配'/roster/2'
+<Route exact path='/roster'/>
+注意：在匹配路由时，React Router只关注location的路径名。当URL如下时：
+
+http://www.example.com/my-projects/one?extra=false
+React Router去匹配的只是'/my-projects/one'这一部分。
+
+
+4.3.7、创建路由
+可以在路由器(router)组件中的任意位置创建多个<Route>，但通常我们会把它们放在同一个位置。使用<Switch>组件来包裹一组<Route>。<Switch>会遍历自身的子元素（即路由）并对第一个匹配当前路径的元素进行渲染。
+
+4.3.8、<Route>是如何渲染的？
+当一个路由的path匹配成功后，路由用来确定渲染结果的参数有三种。只需要提供其中一个即可。
+
+component ： 一个React组件。当带有component参数的route匹配成功后，route会返回一个新的元素，其为component参数所对应的React组件（使用React.createElement创建）。
+render ： 一个返回React element的函数[注5]。当匹配成功后调用该函数。该过程与传入component参数类似，并且对于行级渲染与需要向元素传入额外参数的操作会更有用。
+
+children ： 一个返回React element的函数。与上述两个参数不同，无论route是否匹配当前location，其都会被渲染。
+
+<Route path='/page' component={Page} />
+const extraProps = { color: 'red' }
+<Route path='/page' render={(props) => (
+  <Page {...props} data={extraProps}/>
+)}/>
+<Route path='/page' children={(props) => (
+  props.match
+    ? <Page {...props}/>
+    : <EmptyPage {...props}/>
+)}/>
+通常component参数与render参数被更经常地使用。children参数偶尔会被使用，它更常用在path无法匹配时呈现的'空'状态。在本例中并不会有额外的状态，所以我们将使用<Route>的component参数。
+
+通过<Route>渲染的元素会被传入一些参数。分别是match对象，当前location对象[注6]以及history对象（由router创建）[注7]。
+
+4.3.9、嵌套路由
+在<Roster>组件中，我们将为两种路径进行渲染：
+
+/roster ：对应路径名仅仅是/roster时，因此需要在exact元素上添加exact参数。
+
+/roster/:number ： 该路由使用一个路由参数来获取/roster后的路径名。
+
+const Roster = () => (
+<Switch>
+
+<Route exact path='/roster' component={FullRoster}/>
+<Route path='/roster/:number' component={Player}/>
+</Switch>
+)
+组合在相同组件中分享共同前缀的路由是一种有用的方法。这就需要简化父路由并且提供一个区域来渲染具有相同前缀的通用路由。
+
+4.3.10、Link
+现在，我们应用需要在各个页面间切换。如果使用锚点元素（就是）实现，在每次点击时页面将被重新加载。React Router提供了<Link>组件用来避免这种状况的发生。当你点击<Link>时，URL会更新，组件会被重新渲染，但是页面不会重新加载。
+
+import { Link } from 'react-router-dom'
+const Header = () => (
+  <header>
+    <nav>
+      <ul>
+        <li><Link to='/'>Home</Link></li>
+        <li><Link to='/roster'>Roster</Link></li>
+        <li><Link to='/schedule'>Schedule</Link></li>
+      </ul>
+    </nav>
+  </header>
+)
+<Link>使用'to'参数来描述需要定位的页面。它的值即可是字符串也可是location对象（包含pathname，search，hash与state属性）。如果其值为字符床将会被转换为location对象。
+
+<Link to={{ pathname: '/roster/7' }}>Player #7</Link>
+
+4.3.11、NavLink
+<NavLink>是<Link>的一个特定版本，会在匹配上当前的url的时候给已经渲染的元素添加参数，组件的属性有
+
+activeClassName(string)：设置选中样式，默认值为active
+activeStyle(object)：当元素被选中时，为此元素添加样式
+exact(bool)：为true时，只有当导致和完全匹配class和style才会应用
+strict(bool)：为true时，在确定为位置是否与当前URL匹配时，将考虑位置pathname后的斜线
+isActive(func)判断链接是否激活的额外逻辑的功能
+例子：
+// activeClassName选中时样式为selected
+<NavLink
+  to="/faq"
+  activeClassName="selected"
+>FAQs</NavLink>
+ 
+// 选中时样式为activeStyle的样式设置
+<NavLink
+  to="/faq"
+  activeStyle={{
+    fontWeight: 'bold',
+    color: 'red'
+   }}
+>FAQs</NavLink>
+ 
+// 当event id为奇数的时候，激活链接
+const oddEvent = (match, location) => {
+  if (!match) {
+    return false
+  }
+  const eventID = parseInt(match.params.eventID)
+  return !isNaN(eventID) && eventID % 2 === 1
+}
+ 
+<NavLink
+  to="/events/123"
+  isActive={oddEvent}
+>Event 123</NavLink>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
